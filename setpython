@@ -1,0 +1,2 @@
+export PYTHONPATH=/mnt/homenfs/python2.7.3_install/lib/python2.7/
+export PATH=$PATH:/mnt/homenfs/python2.7.3_install/bin
