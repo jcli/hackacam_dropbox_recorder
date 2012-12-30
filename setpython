@@ -1,2 +1,2 @@
-export PYTHONPATH=/mnt/homenfs/python2.7.3_install/lib/python2.7/
-export PATH=$PATH:/mnt/homenfs/python2.7.3_install/bin
+export PYTHONPATH=/mnt/nfs/Stretch/hackacam_dropbox_recorder/python2.7.3_install/lib/python2.7/
+export PATH=$PATH:/mnt/nfs/Stretch/hackacam_dropbox_recorder/python2.7.3_install/bin
