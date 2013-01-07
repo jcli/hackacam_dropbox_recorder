@@ -62,8 +62,13 @@ def main():
     # term = DropboxTerm(APP_KEY, APP_SECRET)
     uploader = DropboxUploader(APP_KEY, APP_SECRET)
     # term.cmdloop()
-    uploader.do_login()
+    if (not uploader.sess.is_linked()):        
+        uploader.do_login()
     print("starting dropbox uploader")
+
+    testFile = open("testfile.txt")
+    response = uploader.api_client.put_file('/testfile.txt', testFile)
+    print "uploaded:", response
     
 if __name__ == '__main__':
     main()
