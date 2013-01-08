@@ -55,7 +55,15 @@ class StoredSession(session.DropboxSession):
     def unlink(self):
         self.delete_creds()
         session.DropboxSession.unlink(self)
-        
+
+def listJpeg(parentDir):
+    jpegList=[];
+    for file in os.listdir(parentDir):
+        if '.jpg' in file :
+            jpegList.append(file)
+    jpegList.sort();
+    return jpegList
+    
 def main():
     if APP_KEY == '' or APP_SECRET == '':
         exit("You need to set your APP_KEY and APP_SECRET!")
@@ -66,9 +74,19 @@ def main():
         uploader.do_login()
     print("starting dropbox uploader")
 
-    testFile = open("testfile.txt")
-    response = uploader.api_client.put_file('/testfile.txt', testFile)
-    print "uploaded:", response
+    # testFile = open("testfile.txt")
+    # response = uploader.api_client.put_file('/testfile.txt', testFile)
+    # print "uploaded:", response
+
+    while True:
+        snapshots = listJpeg('../src_c/')
+        if (len(snapshots)>1):
+            print '../src_c/'+snapshots[0]
+            snapshot = open('../src_c/'+snapshots[0])
+            response = uploader.api_client.put_file(snapshots[0], snapshot)
+            snapshot.close()
+            print "uploaded:", response
+            os.remove('../src_c/'+snapshots[0])
     
 if __name__ == '__main__':
     main()

@@ -1,3 +1,5 @@
+#include <dirent.h> 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -5,6 +7,53 @@
 #include "string.h"
 
 FILE * output_file;
+
+int current_dir_jpg_counter()
+{
+    DIR           *d;
+    struct dirent *dir;
+    int jpg_num = 0;
+    d = opendir(".");
+    if (d)
+        {
+            while ((dir = readdir(d)) != NULL)
+                {
+                    //                    printf("%s\n", dir->d_name);
+                    int len = strlen(dir->d_name);
+                    if (dir->d_name[len-1]=='g' &&
+                        dir->d_name[len-2]=='p' &&
+                        dir->d_name[len-3]=='j'){
+                        jpg_num++;
+                    }
+                }
+            
+            closedir(d);
+        }
+    return jpg_num;
+}
+
+void current_date(char* dateTime, unsigned int length)
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    const char *extension = ".jpg";
+    memset(dateTime, 0, length);
+
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    //    printf ( "Current local time and date: %s", asctime (timeinfo) );
+    if (length<strlen(asctime(timeinfo))+strlen(extension)+1){
+        printf("buffer overflow!\n");
+        exit(0);
+    }
+    memcpy(dateTime, asctime(timeinfo), strlen(asctime(timeinfo))-1);
+    for (unsigned int i=0; i<strlen(dateTime); i++){
+        if (dateTime[i]==' ' || dateTime[i]==':'){
+            dateTime[i]='_';
+        }
+    }
+    memcpy(&dateTime[strlen(dateTime)], extension, strlen(extension)+1);
+}
 
 void stream_callback(sdvr_chan_handle_t handle,
                        sdvr_frame_type_e frame_type, sx_uint32 stream_id)
@@ -16,8 +65,20 @@ void stream_callback(sdvr_chan_handle_t handle,
     sx_uint32 frame_payload_size;
 
     sdvr_av_buf_payload(av_frame, &frame_payload, &frame_payload_size);
+    if (frame_type == SDVR_FRAME_JPEG_SNAPSHOT){
+        if (current_dir_jpg_counter()<4){
+            char dateTimeName[32];
+            current_date(dateTimeName, 32);
+            FILE *snapshot_file = fopen(dateTimeName, "wb");
+            fwrite(frame_payload, 1, frame_payload_size, snapshot_file);
+            fclose(snapshot_file);
+        }
+        //        printf("number of jpeg is %d\n", current_dir_jpg_counter());
 
-    fwrite(frame_payload, 1, frame_payload_size, output_file);
+        //        printf("%s\n", dateTime);
+    }else{
+        //        fwrite(frame_payload, 1, frame_payload_size, output_file);        
+    }
     sdvr_release_av_buffer(av_frame);
 }
 
@@ -41,6 +102,8 @@ int main()
         printf("sdvr_upgrade_firmware() failed: %s\n", sdvr_get_error_text(status));
     }
 
+    printf ("firmware uploaded.\n");
+
     sdvr_board_settings_t board_settings;
     memset(&board_settings, 0, sizeof(sdvr_board_settings_t));   
     board_settings.hd_video_std = SDVR_VIDEO_STD_1080P30;
@@ -49,6 +112,8 @@ int main()
     if (status){
         printf("sdvr_board_connect_ex() failed: %s\n", sdvr_get_error_text(status));
     }
+
+    printf ("board connected.\n");
 
     sdvr_chan_def_t chanDef;
     memset(&chanDef, 0 , sizeof(sdvr_chan_def_t));
@@ -97,7 +162,11 @@ int main()
         printf("sdvr_enable_encoder() failed: %s\n", sdvr_get_error_text(status));
     }
 
-    usleep(10000000);
+    // test snapshot
+    while(1){
+        sdvr_snapshot(camera_chan_handle, SDVR_VIDEO_RES_DECIMATION_EQUAL);
+        usleep(5000000);
+    }
 
     status = sdvr_enable_encoder(camera_chan_handle, SDVR_ENC_PRIMARY, 0);
     if (status){

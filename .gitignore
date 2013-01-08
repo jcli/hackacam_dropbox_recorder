@@ -1,1 +1,6 @@
-token_store.txt
+*.jpg
+src_c/resource/
+src_python/token_store.txt
+*.h264
+*.d
+src_c/hackacam_snapshots
